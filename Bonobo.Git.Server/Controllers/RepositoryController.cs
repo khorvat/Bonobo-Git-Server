@@ -13,6 +13,7 @@ using System.Configuration;
 using System.Text.RegularExpressions;
 using Bonobo.Git.Server.Configuration;
 using LibGit2Sharp;
+using Bonobo.Git.Server.Extensions;
 
 namespace Bonobo.Git.Server.Controllers
 {
@@ -31,13 +32,13 @@ namespace Bonobo.Git.Server.Controllers
         public IRepositoryPermissionService RepositoryPermissionService { get; set; }
 
 
-        [FormsAuthorize]
+        [WebAuthorize]
         public ActionResult Index()
         {
             return View(GetIndexModel());
         }
 
-        [FormsAuthorizeRepository(RequiresRepositoryAdministrator = true)]
+        [WebAuthorizeRepository(RequiresRepositoryAdministrator = true)]
         public ActionResult Edit(string id)
         {
             if (!String.IsNullOrEmpty(id))
@@ -50,12 +51,12 @@ namespace Bonobo.Git.Server.Controllers
         }
 
         [HttpPost]
-        [FormsAuthorizeRepository(RequiresRepositoryAdministrator = true)]
+        [WebAuthorizeRepository(RequiresRepositoryAdministrator = true)]
         public ActionResult Edit(RepositoryDetailModel model)
         {
             if (ModelState.IsValid)
             {
-                if (model.Administrators.Contains(User.Identity.Name))
+                if (model.Administrators.Contains(User.Identity.Name.ToLowerInvariant()))
                 {
                     RepositoryRepository.Update(ConvertRepositoryDetailModel(model));
                     ViewBag.UpdateSuccess = true;
@@ -69,7 +70,7 @@ namespace Bonobo.Git.Server.Controllers
             return View(model);
         }
 
-        [FormsAuthorize]
+        [WebAuthorize]
         public ActionResult Create()
         {
             if (!User.IsInRole(Definitions.Roles.Administrator) && !UserConfiguration.Current.AllowUserRepositoryCreation)
@@ -79,14 +80,14 @@ namespace Bonobo.Git.Server.Controllers
 
             var model = new RepositoryDetailModel
             {
-                Administrators = new string[] { User.Identity.Name },
+                Administrators = new string[] { User.Identity.Name.ToLowerInvariant() },
             };
             PopulateEditData();
             return View(model);
         }
 
         [HttpPost]
-        [FormsAuthorize]
+        [WebAuthorize]
         public ActionResult Create(RepositoryDetailModel model)
         {
             if (!User.IsInRole(Definitions.Roles.Administrator) && !UserConfiguration.Current.AllowUserRepositoryCreation)
@@ -131,7 +132,7 @@ namespace Bonobo.Git.Server.Controllers
             return View(model);
         }
 
-        [FormsAuthorizeRepository(RequiresRepositoryAdministrator = true)]
+        [WebAuthorizeRepository(RequiresRepositoryAdministrator = true)]
         public ActionResult Delete(string id)
         {
             if (!String.IsNullOrEmpty(id))
@@ -143,7 +144,7 @@ namespace Bonobo.Git.Server.Controllers
         }
 
         [HttpPost]
-        [FormsAuthorizeRepository(RequiresRepositoryAdministrator = true)]
+        [WebAuthorizeRepository(RequiresRepositoryAdministrator = true)]
         public ActionResult Delete(RepositoryDetailModel model)
         {
             if (model != null && !String.IsNullOrEmpty(model.Name))
@@ -159,7 +160,7 @@ namespace Bonobo.Git.Server.Controllers
             return RedirectToAction("Index");
         }
 
-        [FormsAuthorizeRepository]
+        [WebAuthorizeRepository]
         public ActionResult Detail(string id)
         {
             ViewBag.ID = id;
@@ -175,7 +176,7 @@ namespace Bonobo.Git.Server.Controllers
             return View();
         }
 
-        [FormsAuthorizeRepository]
+        [WebAuthorizeRepository]
         public ActionResult Tree(string id, string name, string path)
         {
             ViewBag.ID = id;
@@ -198,7 +199,7 @@ namespace Bonobo.Git.Server.Controllers
             return View();
         }
 
-        [FormsAuthorizeRepository]
+        [WebAuthorizeRepository]
         public ActionResult Blob(string id, string name, string path)
         {
             ViewBag.ID = id;
@@ -224,7 +225,7 @@ namespace Bonobo.Git.Server.Controllers
             return View();
         }
 
-        [FormsAuthorizeRepository]
+        [WebAuthorizeRepository]
         public ActionResult Raw(string id, string name, string path)
         {
             ViewBag.ID = id;
@@ -241,7 +242,7 @@ namespace Bonobo.Git.Server.Controllers
             return View();
         }
 
-        [FormsAuthorizeRepository]
+        [WebAuthorizeRepository]
         public ActionResult Commits(string id, string name)
         {
             ViewBag.ID = id;
@@ -259,7 +260,7 @@ namespace Bonobo.Git.Server.Controllers
             return View();
         }
 
-        [FormsAuthorizeRepository]
+        [WebAuthorizeRepository]
         public ActionResult Commit(string id, string commit)
         {
             ViewBag.ID = id;
@@ -330,7 +331,7 @@ namespace Bonobo.Git.Server.Controllers
                 Users = model.Users,
                 Administrators = model.Administrators,
                 Teams = model.Teams,
-                IsCurrentUserAdministrator = model.Administrators.Contains(User.Identity.Name),
+                IsCurrentUserAdministrator = model.Administrators.Contains(User.Identity.Name.ToLowerInvariant()),
                 AllowAnonymous = model.AnonymousAccess
             };
         }

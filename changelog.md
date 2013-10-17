@@ -4,6 +4,62 @@ description: Tracks changes and bug fixes between different versions of Bonobo G
 tags: [Changelog, Changes, Bug Fixes, Features]
 ---
 
+## Unknown
+
+**Unknown**
+
+### Features
+
+* Swedish localization - [JLedel](https://github.com/JLedel)
+
+### Bug Fixes
+
+
+<hr />
+
+
+## Version 2.0.1
+
+**30 August 2013**
+
+### Features
+
+* Displaying current username in Windows Authentication mode
+
+### Bug Fixes
+
+* Fixed the problem with repository view for normal users in Windows Authentication mode
+
+
+<hr />
+
+
+
+## Version 2.0
+
+**25 August 2013**
+
+### Features
+
+* Windows Authentication Support
+* Spanish Translation
+
+### Bug Fixes
+
+* Usernames are normalized to invariant lowercase.
+* Fix text in Chinese translation
+
+
+### Compatibility Issues
+
+* Converts all the usernames to lowercase. 
+	* Keep that in mind while logging
+	* Only ASCII chars are supported even for existing usernames, if you have other characters in your username it is recommended to create a new user.
+
+
+<hr />
+
+
 ## Version 1.3.0 
 
 **30 June 2013**

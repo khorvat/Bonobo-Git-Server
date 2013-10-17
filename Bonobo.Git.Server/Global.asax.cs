@@ -15,6 +15,7 @@ using System.Diagnostics;
 using System.Web.Security;
 using System.Security.Principal;
 using Bonobo.Git.Server.Configuration;
+using Bonobo.Git.Server.Data.Update;
 
 namespace Bonobo.Git.Server
 {
@@ -81,14 +82,19 @@ namespace Bonobo.Git.Server
                 var culture = (CultureInfo)this.Session["Culture"];
                 if (culture == null)
                 {
-                    string langName = "en";
+                    culture = new CultureInfo(UserConfiguration.Current.DefaultLanguage);
 
-                    if (HttpContext.Current.Request.UserLanguages != null && HttpContext.Current.Request.UserLanguages.Length != 0)
+                    if (culture == null)
                     {
-                        langName = HttpContext.Current.Request.UserLanguages[0].Substring(0, 2);
+                        string langName = "en";
+
+                        if (HttpContext.Current.Request.UserLanguages != null && HttpContext.Current.Request.UserLanguages.Length != 0)
+                        {
+                            langName = HttpContext.Current.Request.UserLanguages[0].Substring(0, 2);
+                        }
+                        culture = new CultureInfo(langName);
+                        this.Session["Culture"] = culture;
                     }
-                    culture = new CultureInfo(langName);
-                    this.Session["Culture"] = culture;
                 }
                 Thread.CurrentThread.CurrentUICulture = culture;
                 Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture(culture.Name);
@@ -118,8 +124,8 @@ namespace Bonobo.Git.Server
             AreaRegistration.RegisterAllAreas();
             RegisterRoutes(RouteTable.Routes);
             RegisterDependencyResolver();
-
-            BonoboGitServerContext.RunAutomaticUpdate();
+                        
+            new AutomaticUpdater().Run();
             UserConfiguration.Initialize();
         }
 

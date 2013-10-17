@@ -5,13 +5,15 @@ using System;
 using System.Configuration;
 using System.IO;
 using System.IO.Compression;
+using System.Security.Principal;
 using System.Text;
 using System.Web;
 using System.Web.Mvc;
+using Bonobo.Git.Server.Extensions;
 
 namespace Bonobo.Git.Server.Controllers
 {
-    [BasicAuthorize]
+    [GitAuthorize]
     public class GitController : Controller
     {
         [Dependency]
@@ -20,7 +22,7 @@ namespace Bonobo.Git.Server.Controllers
 
         public ActionResult SecureGetInfoRefs(String project, String service)
         {
-            if (RepositoryPermissionService.HasPermission(HttpContext.User.Identity.Name, project)
+            if (RepositoryPermissionService.HasPermission(User.Identity.Name, project)
                 || (RepositoryPermissionService.AllowsAnonymous(project)
                     && (String.Equals("git-upload-pack", service, StringComparison.InvariantCultureIgnoreCase)
                         || UserConfiguration.Current.AllowAnonymousPush)))
@@ -36,7 +38,7 @@ namespace Bonobo.Git.Server.Controllers
         [HttpPost]
         public ActionResult SecureUploadPack(String project)
         {
-            if (RepositoryPermissionService.HasPermission(HttpContext.User.Identity.Name, project)
+            if (RepositoryPermissionService.HasPermission(User.Identity.Name, project)
                 || RepositoryPermissionService.AllowsAnonymous(project))
             {
                 return ExecuteUploadPack(project);
@@ -50,7 +52,7 @@ namespace Bonobo.Git.Server.Controllers
         [HttpPost]
         public ActionResult SecureReceivePack(String project)
         {
-            if (RepositoryPermissionService.HasPermission(HttpContext.User.Identity.Name, project)
+            if (RepositoryPermissionService.HasPermission(User.Identity.Name, project)
                 || (RepositoryPermissionService.AllowsAnonymous(project) && UserConfiguration.Current.AllowAnonymousPush))
             {
                 return ExecuteReceivePack(project);
@@ -60,6 +62,7 @@ namespace Bonobo.Git.Server.Controllers
                 return UnauthorizedResult();
             }
         }
+
 
         private ActionResult ExecuteReceivePack(string project)
         {
@@ -127,16 +130,6 @@ namespace Bonobo.Git.Server.Controllers
             return new HttpStatusCodeResult(401);
         }
 
-        //private static byte[] FormatMessage(String input)
-        //{
-        //    return _encoding.GetBytes((input.Length + 4).ToString("X").ToLower().PadLeft(4, '0') + input);
-        //}
-
-        //private static byte[] FlushMessage()
-        //{
-        //    return new[] { (byte)'0', (byte)'0', (byte)'0', (byte)'0' };
-        //}
-
         private static String FormatMessage(String input)
         {
             return (input.Length + 4).ToString("X").PadLeft(4, '0') + input;
@@ -175,7 +168,10 @@ namespace Bonobo.Git.Server.Controllers
                 args += " --advertise-refs";
             args += " \"" + workingDir + "\"";
 
-            var info = new System.Diagnostics.ProcessStartInfo(System.Web.HttpContext.Current.Server.MapPath(ConfigurationManager.AppSettings["GitPath"]), args)
+            var gitPath = Path.IsPathRooted(ConfigurationManager.AppSettings["GitPath"]) 
+                ? ConfigurationManager.AppSettings["GitPath"] 
+                : System.Web.HttpContext.Current.Server.MapPath(ConfigurationManager.AppSettings["GitPath"]);
+            var info = new System.Diagnostics.ProcessStartInfo(gitPath, args)
             {
                 CreateNoWindow = true,
                 RedirectStandardError = true,

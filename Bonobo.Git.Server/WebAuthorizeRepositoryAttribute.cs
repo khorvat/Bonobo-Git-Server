@@ -5,10 +5,11 @@ using System.Web;
 using System.Web.Mvc;
 using Microsoft.Practices.Unity;
 using Bonobo.Git.Server.Security;
+using Bonobo.Git.Server.Extensions;
 
 namespace Bonobo.Git.Server
 {
-    public class FormsAuthorizeRepositoryAttribute : FormsAuthorizeAttribute
+    public class WebAuthorizeRepositoryAttribute : WebAuthorizeAttribute
     {
         [Dependency]
         public IRepositoryPermissionService RepositoryPermissionService { get; set; }
@@ -17,6 +18,8 @@ namespace Bonobo.Git.Server
 
         public override void OnAuthorization(AuthorizationContext filterContext)
         {
+            base.OnAuthorization(filterContext);
+
             var repository = filterContext.Controller.ControllerContext.RouteData.Values["id"].ToString();
             var user = filterContext.HttpContext.User.Identity.Name;
             if (RequiresRepositoryAdministrator)
@@ -37,7 +40,6 @@ namespace Bonobo.Git.Server
                 }
             }
 
-            base.OnAuthorization(filterContext);
         }
     }
 }
