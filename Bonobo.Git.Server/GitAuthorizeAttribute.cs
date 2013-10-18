@@ -26,6 +26,7 @@ namespace Bonobo.Git.Server
             {
                 throw new ArgumentNullException("filterContext");
             }
+            bool processAuthorization = false;
             string username = null;
             string password = null;
             string auth = filterContext.HttpContext.Request.Headers["Authorization"];
@@ -42,6 +43,7 @@ namespace Bonobo.Git.Server
                     {
                         username = auth.Substring(0, auth.IndexOf(':'));
                         password = auth.Substring(auth.IndexOf(':') + 1);
+                        processAuthorization = true;
                     }
                 }
             }
@@ -51,7 +53,9 @@ namespace Bonobo.Git.Server
                 string value = Encoding.ASCII.GetString(encodedDataAsBytes);
                 username = value.Substring(0, value.IndexOf(':'));
                 password = value.Substring(value.IndexOf(':') + 1);
+                processAuthorization = true;
             }
+
             if (!String.IsNullOrWhiteSpace(filterContext.HttpContext.Request.Url.UserInfo) && String.IsNullOrWhiteSpace(auth))
             {
                 auth = filterContext.HttpContext.Request.Url.UserInfo;
@@ -59,17 +63,20 @@ namespace Bonobo.Git.Server
                 {
                     username = auth.Substring(0, auth.IndexOf(':'));
                     password = auth.Substring(auth.IndexOf(':') + 1);
+                    processAuthorization = true;
                 }
             }
-           
 
-            if (!String.IsNullOrEmpty(username) && !String.IsNullOrEmpty(password) && MembershipService.ValidateUser(username, password))
+            if (processAuthorization)
             {
-                filterContext.HttpContext.User = new GenericPrincipal(new GenericIdentity(username), null);
-            }
-            else
-            {
-                filterContext.Result = new HttpStatusCodeResult(401);
+                if (!String.IsNullOrEmpty(username) && !String.IsNullOrEmpty(password) && MembershipService.ValidateUser(username, password))
+                {
+                    filterContext.HttpContext.User = new GenericPrincipal(new GenericIdentity(username), null);
+                }
+                else
+                {
+                    filterContext.Result = new HttpStatusCodeResult(401);
+                }
             }
         }
 
